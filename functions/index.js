@@ -11,7 +11,7 @@ function getToken() {
   return `${API_KEY.value()}:${API_SECRET.value()}`;
 }
 
-exports.helloWorld = functions.https.onRequest(async (request, response) => {
+exports.totalExpenses = functions.https.onRequest(async (request, response) => {
   const frappe = new FrappeApp(appURL, {
     useToken: true,
     token: getToken,
@@ -19,12 +19,15 @@ exports.helloWorld = functions.https.onRequest(async (request, response) => {
   });
 
   const db = frappe.db();
-  let count;
-  try {
-    count = await db.getCount("User");
-  } catch(e) {
-    console.log(e)
+
+  const expenses = await db.getDocList("Expense", {
+    fields: ["amount"],
+  });
+
+  let sum = 0;
+  for (let expense of expenses) {
+    sum += expense.amount;
   }
-  functions.logger.info("Hello logs!", { structuredData: true });
-  response.send(`User Count: ${count}!`);
+
+  response.send({ totalExpense: sum });
 });
